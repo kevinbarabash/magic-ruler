@@ -7,22 +7,32 @@ const height = window.innerHeight;
 const lineWidth = 50;
 
 
+const genCorners = (head, tail, width) => {
+    const angle = Math.atan2(tail.x - head.x, tail.y - head.y);
+    const wsin = (width / 2) * Math.sin(angle);
+    const wcos = (width / 2) * Math.cos(angle);
+
+    return [
+        new THREE.Vector3(head.x + wcos, head.y - wsin),
+        new THREE.Vector3(tail.x + wcos, tail.y - wsin),
+        new THREE.Vector3(tail.x - wcos, tail.y + wsin),
+        new THREE.Vector3(head.x - wcos, head.y + wsin)
+    ];
+};
+
 function init() {
 
     scene = new THREE.Scene();
 
-    camera = new THREE.OrthographicCamera(0, width, height / 2, -height / 2, 1, 1000);
+    camera = new THREE.OrthographicCamera(0, width, height, 0, 1, 1000);
     camera.position.z = 1000;
-
-    const length = 675;
-    // geometry = new THREE.PlaneGeometry( length, 200 );
 
     geometry = new THREE.Geometry();
 
-    geometry.vertices.push(new THREE.Vector3(0,0,0));
-    geometry.vertices.push(new THREE.Vector3(length,0,0));
-    geometry.vertices.push(new THREE.Vector3(length,lineWidth,0));
-    geometry.vertices.push(new THREE.Vector3(0,lineWidth,0));
+    const head = new THREE.Vector2(100, 100);
+    const tail = new THREE.Vector2(500, 300);
+
+    geometry.vertices = genCorners(head, tail, lineWidth);
 
     geometry.faces.push(new THREE.Face3( 0, 1, 2 ) );
     geometry.faces.push(new THREE.Face3( 0, 2, 3 ) );
@@ -41,7 +51,7 @@ function init() {
 
     texture = new THREE.TextureLoader().load( "textures/basketball.png" );
     texture.wrapS = THREE.RepeatWrapping;
-    texture.repeat.set( length / lineWidth, 1 );
+    texture.repeat.set( head.distanceTo(tail) / lineWidth, 1 );
 
     material = new THREE.MeshBasicMaterial( { map: texture, transparent: true } );
 
@@ -58,14 +68,9 @@ function init() {
 }
 
 function animate() {
+    requestAnimationFrame(animate);
 
-    requestAnimationFrame( animate );
-
-    // mesh.rotation.x += 0.01;
-    // mesh.rotation.y += 0.02;
-
-    renderer.render( scene, camera );
-
+    renderer.render(scene, camera);
 }
 
 let down = false;
@@ -76,20 +81,22 @@ let tail = null;
 
 document.addEventListener('mousedown', function(e) {
     down = true;
-    head = e.pageX;
+    head = new THREE.Vector2(e.pageX, height - e.pageY);
 });
 
 document.addEventListener('mousemove', function(e) {
     if (down) {
-        const length = lineWidth * Math.max(Math.round((e.pageX - head) / lineWidth), 1);
+        tail = new THREE.Vector2(e.pageX, height - e.pageY);
 
-        geometry.vertices[0].x = head;
-        geometry.vertices[1].x = head + length;
-        geometry.vertices[2].x = head + length;
-        geometry.vertices[3].x = head;
+        const corners = genCorners(head, tail, lineWidth);
+        for (let i = 0; i < 4; i++) {
+            geometry.vertices[i].x = corners[i].x;
+            geometry.vertices[i].y = corners[i].y;
+        }
 
         geometry.verticesNeedUpdate = true;
 
+        const length = head.distanceTo(tail);
         texture.repeat.set( length / lineWidth, 1 );
     }
 });
