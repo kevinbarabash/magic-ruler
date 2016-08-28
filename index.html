@@ -6,10 +6,29 @@
     <style>
         body {
             margin: 0;
+            overflow: hidden;
+        }
+
+        #menu {
+            height: 100px;
+            border-bottom: solid 1px #CCC;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        #menu img {
+            margin-left: 16px;
         }
     </style>
 </head>
 <body>
+
+<div id="menu">
+    <img id="baseball" src="textures/baseball.png" width="75" height="75"/>
+    <img id="basketball" src="textures/basketball.png" width="75" height="75"/>
+    <img id="tire" src="textures/tire.png" width="75" height="75"/>
+</div>
 
 <script src="lib/three.min.js"></script>
 <script src="src/test.js"></script>

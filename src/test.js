@@ -3,6 +3,7 @@ var geometry, material, mesh, texture;
 
 const width = window.innerWidth;
 const height = window.innerHeight;
+const menuHeight = 100;
 
 const lineWidth = 50;
 
@@ -21,17 +22,29 @@ const genCorners = (head, tail, width) => {
     ];
 };
 
+const objectList = ['baseball', 'basketball', 'tire'];
+const textures = {};
 
+for (const objectName of objectList) {
+    textures[objectName] = new THREE.TextureLoader().load(`textures/${objectName}.png`);
+
+    const img = document.querySelector(`#${objectName}`);
+    img.addEventListener('click', () => {
+        currentObject = objectName;
+    });
+}
+
+let currentObject = 'tire';
 
 function init() {
     scene = new THREE.Scene();
 
-    camera = new THREE.OrthographicCamera(0, width, height, 0, 1, 1000);
+    camera = new THREE.OrthographicCamera(0, width, height - menuHeight, 0, 1, 1000);
     camera.position.z = 1000;
 
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor(0x7f7f7f, 1.0);
-    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setSize( window.innerWidth, window.innerHeight - menuHeight );
 
     document.body.appendChild( renderer.domElement );
 }
@@ -73,14 +86,8 @@ document.addEventListener('mousedown', function(e) {
         new THREE.Vector2(0, 1)
     ]);
 
-    if (texture) {
-        texture = texture.clone();
-        texture.needsUpdate = true;
-    } else {
-        // THREE complains about texture not being power of 2 b/c we're using
-        // texture.wrapS = THREE.RepeatWrapping;
-        texture = new THREE.TextureLoader().load( "textures/basketball.png" );
-    }
+    texture = textures[currentObject].clone();
+    texture.needsUpdate = true;
 
     texture.wrapS = THREE.RepeatWrapping;
     texture.repeat.set( 1 + Math.floor(head.distanceTo(tail) / lineWidth), 1 );
