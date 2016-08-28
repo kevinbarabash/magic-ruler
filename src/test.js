@@ -7,15 +7,17 @@ const height = window.innerHeight;
 const lineWidth = 50;
 
 const genCorners = (head, tail, width) => {
-    const angle = Math.atan2(tail.x - head.x, tail.y - head.y);
+    const angle = Math.atan2(tail.y - head.y, tail.x - head.x);
     const wsin = (width / 2) * Math.sin(angle);
     const wcos = (width / 2) * Math.cos(angle);
+    const length = width * Math.floor(head.distanceTo(tail) / width);
+    const croppedTail = new THREE.Vector2(head.x + length * Math.cos(angle),head.y + length * Math.sin(angle));
 
     return [
-        new THREE.Vector3(head.x + wcos, head.y - wsin),
-        new THREE.Vector3(tail.x + wcos, tail.y - wsin),
-        new THREE.Vector3(tail.x - wcos, tail.y + wsin),
-        new THREE.Vector3(head.x - wcos, head.y + wsin)
+        new THREE.Vector3(head.x + wsin - wcos, head.y - wcos - wsin),
+        new THREE.Vector3(croppedTail.x + wsin + wcos, croppedTail.y - wcos + wsin),
+        new THREE.Vector3(croppedTail.x - wsin + wcos, croppedTail.y + wcos + wsin),
+        new THREE.Vector3(head.x - wsin - wcos, head.y + wcos - wsin)
     ];
 };
 
@@ -26,37 +28,6 @@ function init() {
 
     camera = new THREE.OrthographicCamera(0, width, height, 0, 1, 1000);
     camera.position.z = 1000;
-
-    geometry = new THREE.Geometry();
-
-    const head = new THREE.Vector2(100, 100);
-    const tail = new THREE.Vector2(500, 300);
-
-    geometry.vertices = genCorners(head, tail, lineWidth);
-
-    geometry.faces.push(new THREE.Face3( 0, 1, 2 ) );
-    geometry.faces.push(new THREE.Face3( 0, 2, 3 ) );
-
-    geometry.faceVertexUvs[0].push([
-        new THREE.Vector2(0, 0),
-        new THREE.Vector2(1, 0),
-        new THREE.Vector2(1, 1)
-    ]);
-
-    geometry.faceVertexUvs[0].push([
-        new THREE.Vector2(0, 0),
-        new THREE.Vector2(1, 1),
-        new THREE.Vector2(0, 1)
-    ]);
-
-    texture = new THREE.TextureLoader().load( "textures/basketball.png" );
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.repeat.set( head.distanceTo(tail) / lineWidth, 1 );
-
-    material = new THREE.MeshBasicMaterial( { map: texture, transparent: true } );
-
-    mesh = new THREE.Mesh( geometry, material );
-    scene.add( mesh );
 
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor(0x7f7f7f, 1.0);
@@ -112,7 +83,7 @@ document.addEventListener('mousedown', function(e) {
     }
 
     texture.wrapS = THREE.RepeatWrapping;
-    texture.repeat.set( head.distanceTo(tail) / lineWidth, 1 );
+    texture.repeat.set( 1 + Math.floor(head.distanceTo(tail) / lineWidth), 1 );
 
     material = new THREE.MeshBasicMaterial( { map: texture, transparent: true } );
 
@@ -134,7 +105,7 @@ document.addEventListener('mousemove', function(e) {
         geometry.verticesNeedUpdate = true;
 
         const length = head.distanceTo(tail);
-        mesh.material.map.repeat.set( length / lineWidth, 1 );
+        mesh.material.map.repeat.set( 1 + Math.floor(length / lineWidth), 1 );
     }
 });
 
