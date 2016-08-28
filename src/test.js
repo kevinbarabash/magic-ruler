@@ -6,7 +6,6 @@ const height = window.innerHeight;
 
 const lineWidth = 50;
 
-
 const genCorners = (head, tail, width) => {
     const angle = Math.atan2(tail.x - head.x, tail.y - head.y);
     const wsin = (width / 2) * Math.sin(angle);
@@ -20,8 +19,9 @@ const genCorners = (head, tail, width) => {
     ];
 };
 
-function init() {
 
+
+function init() {
     scene = new THREE.Scene();
 
     camera = new THREE.OrthographicCamera(0, width, height, 0, 1, 1000);
@@ -56,7 +56,6 @@ function init() {
     material = new THREE.MeshBasicMaterial( { map: texture, transparent: true } );
 
     mesh = new THREE.Mesh( geometry, material );
-    // mesh.position.x = length / 2;
     scene.add( mesh );
 
     renderer = new THREE.WebGLRenderer();
@@ -64,7 +63,6 @@ function init() {
     renderer.setSize( window.innerWidth, window.innerHeight );
 
     document.body.appendChild( renderer.domElement );
-
 }
 
 function animate() {
@@ -81,7 +79,46 @@ let tail = null;
 
 document.addEventListener('mousedown', function(e) {
     down = true;
+
+    geometry = new THREE.Geometry();
+
     head = new THREE.Vector2(e.pageX, height - e.pageY);
+    const tail = new THREE.Vector2(head.x, head.y);
+
+    geometry.vertices = genCorners(head, tail, lineWidth);
+
+    geometry.faces.push(new THREE.Face3( 0, 1, 2 ) );
+    geometry.faces.push(new THREE.Face3( 0, 2, 3 ) );
+
+    geometry.faceVertexUvs[0].push([
+        new THREE.Vector2(0, 0),
+        new THREE.Vector2(1, 0),
+        new THREE.Vector2(1, 1)
+    ]);
+
+    geometry.faceVertexUvs[0].push([
+        new THREE.Vector2(0, 0),
+        new THREE.Vector2(1, 1),
+        new THREE.Vector2(0, 1)
+    ]);
+
+    if (texture) {
+        texture = texture.clone();
+        texture.needsUpdate = true;
+    } else {
+        // THREE complains about texture not being power of 2 b/c we're using
+        // texture.wrapS = THREE.RepeatWrapping;
+        texture = new THREE.TextureLoader().load( "textures/basketball.png" );
+    }
+
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.repeat.set( head.distanceTo(tail) / lineWidth, 1 );
+
+    material = new THREE.MeshBasicMaterial( { map: texture, transparent: true } );
+
+    mesh = new THREE.Mesh( geometry, material );
+
+    scene.add( mesh );
 });
 
 document.addEventListener('mousemove', function(e) {
@@ -97,7 +134,7 @@ document.addEventListener('mousemove', function(e) {
         geometry.verticesNeedUpdate = true;
 
         const length = head.distanceTo(tail);
-        texture.repeat.set( length / lineWidth, 1 );
+        mesh.material.map.repeat.set( length / lineWidth, 1 );
     }
 });
 
